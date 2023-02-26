@@ -1,4 +1,5 @@
 use glam::Vec2;
+use log::warn;
 
 #[derive(Clone, Debug, PartialEq)]
 struct Rect {
@@ -29,12 +30,17 @@ impl Rect {
         width as f64 / height as f64
     }
 
+    fn update_aspect_ratio(&mut self) {
+        self.aspect_ratio = self.width as f64 / self.height as f64
+    }
+
     pub fn cut_top(&mut self, amount: f64) -> Self {
         assert!(amount >= 0.0);
         assert!(amount <= self.height);
         self.height -= amount;
         let rect = Self::new(self.width, amount).with_position(self.position);
         self.position.y += amount as f32;
+        self.update_aspect_ratio();
         rect
     }
 
@@ -45,6 +51,7 @@ impl Rect {
 
         let mut position = self.position;
         position.y += self.height as f32;
+        self.update_aspect_ratio();
         Self::new(self.width, amount).with_position(position)
     }
 
@@ -54,6 +61,7 @@ impl Rect {
         self.width -= amount;
         let rect = Self::new(amount, self.height).with_position(self.position);
         self.position.x += amount as f32;
+        self.update_aspect_ratio();
         rect
     }
 
@@ -64,7 +72,36 @@ impl Rect {
 
         let mut position = self.position;
         position.x += self.width as f32;
+        self.update_aspect_ratio();
         Self::new(amount, self.height).with_position(position)
+    }
+
+    pub fn divide_horizontally(mut self, into_parts: usize) -> Vec<Rect> {
+        assert!(into_parts >= 1);
+        if into_parts == 1 {
+            warn!("Dividing Rect into 1 horizontal part.");
+        }
+        let mut result = Vec::with_capacity(into_parts);
+        let division_width = self.width / into_parts as f64;
+        for _ in 0..into_parts - 1 {
+            result.push(self.cut_left(division_width));
+        }
+        result.push(self);
+        result
+    }
+
+    pub fn divide_vertically(mut self, into_parts: usize) -> Vec<Rect> {
+        assert!(into_parts >= 1);
+        if into_parts == 1 {
+            warn!("Dividing Rect into 1 vertical part.");
+        }
+        let mut result = Vec::with_capacity(into_parts);
+        let division_height = self.height / into_parts as f64;
+        for _ in 0..into_parts - 1 {
+            result.push(self.cut_top(division_height));
+        }
+        result.push(self);
+        result
     }
 }
 
@@ -129,5 +166,34 @@ mod tests {
         assert_eq!(rect.position.x, 0.0);
         assert_eq!(rect.height, 480.0);
         assert_eq!(rect.position.y, 0.0);
+    }
+
+    #[test]
+    fn divide_horizontally() {
+        let mut rect = Rect::new(640.0, 480.0);
+        let mut division = rect.divide_horizontally(2);
+        let right_half = division.pop().unwrap();
+        let left_half = division.pop().unwrap();
+        let expected_left = Rect::new(320.0, 480.0).with_position(Vec2::new(0.0, 0.0));
+        let expected_right = Rect::new(320.0, 480.0).with_position(Vec2::new(320.0, 0.0));
+        assert_eq!(right_half, expected_right);
+        assert_eq!(left_half, expected_left);
+        assert!(division.is_empty());
+    }
+
+    #[test]
+    fn divide_vertically() {
+        let mut rect = Rect::new(640.0, 480.0);
+        let mut division = rect.divide_vertically(3);
+        let bottom_third = division.pop().unwrap();
+        let middle_third = division.pop().unwrap();
+        let top_third = division.pop().unwrap();
+        let expected_bottom = Rect::new(640.0, 160.0).with_position(Vec2::new(0.0, 320.0));
+        let expected_middle = Rect::new(640.0, 160.0).with_position(Vec2::new(0.0, 160.0));
+        let expected_top = Rect::new(640.0, 160.0).with_position(Vec2::new(0.0, 0.0));
+        assert_eq!(bottom_third, expected_bottom);
+        assert_eq!(middle_third, expected_middle);
+        assert_eq!(top_third, expected_top);
+        assert!(division.is_empty());
     }
 }
