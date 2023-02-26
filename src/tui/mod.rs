@@ -5,22 +5,65 @@ use crate::{
 
 mod container;
 use container::Container;
+
+use self::container::TuiBorder;
 pub struct Terminal {
-    free_space: Rect,
-    pub stuff: Vec<Container>,
+    width: usize,
+    height: usize,
+    free_space: Option<Rect>,
+    pub containers: Vec<Container>,
 }
 
 impl Terminal {
     pub fn new() -> Self {
-        let (w, h) = term_size::dimensions().unwrap_or((80, 5));
-        dbg!(&w, &h);
-        let mut rect = Rect::new(w as f64, h as f64);
-        let container = Container::new(rect.cut_right(w as f64 - 4.0))
+        let (width, height) = term_size::dimensions().unwrap_or((80, 5));
+        let mut rect = Rect::new(width as f64, height as f64);
+        let container = Container::new(rect.cut_right((width / 3) as f64))
+            .with_padding(Padding::same(2.0))
+            .with_margin(Margin::top(3.0))
+            .with_border(TuiBorder::SmoothCorner);
+        let container2 = Container::new(rect.cut_left((width / 3) as f64))
             .with_padding(Padding::same(2.0))
             .with_margin(Margin::same(1.0));
+        let rects = rect.divide_vertically(3);
+        let mut containers: Vec<Container> = rects
+            .into_iter()
+            .map(|rect| {
+                Container::new(rect)
+                    .with_margin(Margin::top(1.0))
+                    .with_border(TuiBorder::SmoothCorner)
+            })
+            .collect();
+
         Self {
-            free_space: rect,
-            stuff: vec![container],
+            width,
+            height,
+            free_space: None,
+            containers: vec![container, container2]
+                .into_iter()
+                .chain(containers.into_iter())
+                .collect(),
         }
+    }
+
+    pub fn print(&self) {
+        let (width, height) = (self.width, self.height);
+        let capacity = (width + 1) * height;
+        let mut buffer = String::with_capacity(capacity);
+
+        for y in 0..height {
+            for x in 0..width {
+                let contents = self
+                    .containers
+                    .iter()
+                    .filter_map(|c| c.contents_of(x, y))
+                    .next()
+                    .unwrap_or(' ');
+
+                buffer.push(contents);
+            }
+            buffer.push('\n');
+        }
+        println!("{buffer}");
     }
 }

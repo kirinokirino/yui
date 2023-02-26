@@ -2,5 +2,6 @@ use yui::tui::Terminal;
 
 fn main() {
     let terminal = Terminal::new();
-    println!("{:?}", terminal.stuff[0]);
+    terminal.print();
+    std::thread::sleep(std::time::Duration::from_secs(5));
 }
