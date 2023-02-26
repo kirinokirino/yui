@@ -1,3 +1,5 @@
+#![warn(clippy::nursery, clippy::pedantic)]
+#![allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
 use glam::Vec2;
 use log::warn;
 
@@ -22,16 +24,16 @@ impl Rect {
         }
     }
 
-    pub fn with_position(self, position: Vec2) -> Self {
+    pub const fn with_position(self, position: Vec2) -> Self {
         Self { position, ..self }
     }
 
     fn aspect_ratio(width: f64, height: f64) -> f64 {
-        width as f64 / height as f64
+        width / height
     }
 
     fn update_aspect_ratio(&mut self) {
-        self.aspect_ratio = self.width as f64 / self.height as f64
+        self.aspect_ratio = self.width / self.height;
     }
 
     pub fn cut_top(&mut self, amount: f64) -> Self {
@@ -76,7 +78,7 @@ impl Rect {
         Self::new(amount, self.height).with_position(position)
     }
 
-    pub fn divide_horizontally(mut self, into_parts: usize) -> Vec<Rect> {
+    pub fn divide_horizontally(mut self, into_parts: usize) -> Vec<Self> {
         assert!(into_parts >= 1);
         if into_parts == 1 {
             warn!("Dividing Rect into 1 horizontal part.");
@@ -90,7 +92,7 @@ impl Rect {
         result
     }
 
-    pub fn divide_vertically(mut self, into_parts: usize) -> Vec<Rect> {
+    pub fn divide_vertically(mut self, into_parts: usize) -> Vec<Self> {
         assert!(into_parts >= 1);
         if into_parts == 1 {
             warn!("Dividing Rect into 1 vertical part.");
@@ -103,10 +105,6 @@ impl Rect {
         result.push(self);
         result
     }
-}
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
 }
 
 #[cfg(test)]
@@ -170,7 +168,7 @@ mod tests {
 
     #[test]
     fn divide_horizontally() {
-        let mut rect = Rect::new(640.0, 480.0);
+        let rect = Rect::new(640.0, 480.0);
         let mut division = rect.divide_horizontally(2);
         let right_half = division.pop().unwrap();
         let left_half = division.pop().unwrap();
@@ -183,7 +181,7 @@ mod tests {
 
     #[test]
     fn divide_vertically() {
-        let mut rect = Rect::new(640.0, 480.0);
+        let rect = Rect::new(640.0, 480.0);
         let mut division = rect.divide_vertically(3);
         let bottom_third = division.pop().unwrap();
         let middle_third = division.pop().unwrap();
