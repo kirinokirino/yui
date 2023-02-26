@@ -11,6 +11,9 @@ pub struct Container {
     margin: Margin,
     padding: Padding,
     border: TuiBorder,
+
+    content: String,
+    lines_scrolled: usize,
 }
 
 impl Container {
@@ -20,6 +23,9 @@ impl Container {
             margin: Margin::default(),
             padding: Padding::default(),
             border: TuiBorder::default(),
+
+            content: String::new(),
+            lines_scrolled: 0,
         }
     }
 
@@ -107,8 +113,39 @@ impl Container {
             },
         }
     }
+
+    pub fn set_content(&mut self, mut content: String) {
+        let (_pos, width, height) = self.domain.pos_width_height();
+        let width = (width
+            - (self.margin.left
+                + self.margin.right
+                + (self.border.size() as f64) * 2.0
+                + self.padding.left
+                + self.padding.right)) as usize;
+        let height = (height
+            - (self.margin.top
+                + self.margin.bottom
+                + (self.border.size() as f64) * 2.0
+                + self.padding.top
+                + self.padding.bottom)) as usize;
+
+        textwrap::fill_inplace(&mut content, width);
+        self.content = content;
+    }
+
     fn draw_contents(&self, x: usize, y: usize) -> char {
-        'C'
+        let (pos, ..) = self.domain.pos_width_height();
+        let x = x
+            - (self.margin.left + self.border.size() as f64 + self.padding.left + pos.x as f64)
+                as usize;
+        let y = y
+            - (self.margin.top + self.border.size() as f64 + self.padding.top + pos.y as f64)
+                as usize
+            + self.lines_scrolled;
+        if let Some(line) = self.content.lines().nth(y) {
+            return line.chars().nth(x).unwrap_or(' ');
+        }
+        ' '
     }
 
     pub fn contents_of(&self, x: usize, y: usize) -> Option<char> {

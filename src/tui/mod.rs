@@ -18,7 +18,7 @@ impl Terminal {
     pub fn new() -> Self {
         let (width, height) = term_size::dimensions().unwrap_or((80, 5));
         let mut rect = Rect::new(width as f64, height as f64);
-        let container = Container::new(rect.cut_right((width / 3) as f64))
+        let container1 = Container::new(rect.cut_right((width / 3) as f64))
             .with_padding(Padding::same(2.0))
             .with_margin(Margin::top(3.0))
             .with_border(TuiBorder::SmoothCorner);
@@ -35,14 +35,31 @@ impl Terminal {
             })
             .collect();
 
+        let mut containers: Vec<Container> = vec![container1, container2]
+            .into_iter()
+            .chain(containers.into_iter())
+            .collect();
+
+        for container in &mut containers {
+            let words = [
+                "A sentence number 1.".to_string(),
+                "Another example sentence.".to_string(),
+                "Cat.".to_string(),
+                "A sentence number 2.".to_string(),
+                "Molto a qui pensare.".to_string(),
+                "Parrot.".to_string(),
+                "Some more content.".to_string(),
+            ]
+            .into_iter()
+            .cycle();
+            container.set_content(words.take(50).collect());
+        }
+
         Self {
             width,
             height,
             free_space: None,
-            containers: vec![container, container2]
-                .into_iter()
-                .chain(containers.into_iter())
-                .collect(),
+            containers,
         }
     }
 
