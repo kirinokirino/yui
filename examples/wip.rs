@@ -1,7 +1,14 @@
 use yui::tui::Terminal;
 
 fn main() {
-    let terminal = Terminal::new();
-    terminal.print();
-    std::thread::sleep(std::time::Duration::from_secs(5));
+    let mut terminal = Terminal::new();
+    let fps = 60;
+    let frames = fps * 50;
+    for i in 0..frames {
+        terminal.display();
+        std::thread::sleep(std::time::Duration::from_millis(1000/fps));
+        terminal.update();
+        dbg!(terminal);
+        panic!();
+    }
 }

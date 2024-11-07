@@ -7,6 +7,7 @@ mod container;
 use container::Container;
 
 use self::container::TuiBorder;
+#[derive(Debug)]
 pub struct Terminal {
     width: usize,
     height: usize,
@@ -63,7 +64,13 @@ impl Terminal {
         }
     }
 
-    pub fn print(&self) {
+    pub fn update(&mut self) {
+        let (width, height) = term_size::dimensions().unwrap_or((80, 5));
+        self.width = width;
+        self.height = height;
+    }
+
+    pub fn display(&self) {
         let (width, height) = (self.width, self.height);
         let capacity = (width + 1) * height;
         let mut buffer = String::with_capacity(capacity);
@@ -81,6 +88,9 @@ impl Terminal {
             }
             buffer.push('\n');
         }
+        println!("{CLEAR}");
         println!("{buffer}");
     }
 }
+
+const CLEAR: &str = "\x1B[2J\x1B[1;1H";

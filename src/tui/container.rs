@@ -1,11 +1,11 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use crate::{
     common::{Margin, Padding},
     rect::Rect,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Container {
     domain: Rect,
     margin: Margin,
@@ -205,7 +205,7 @@ impl Container {
     }
 }
 
-impl Debug for Container {
+impl Display for Container {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (pos, width, height) = self.domain.pos_width_height();
 
@@ -229,6 +229,7 @@ impl Debug for Container {
         f.write_str(&buffer)
     }
 }
+
 
 #[derive(Debug, Clone, Copy)]
 enum Side {
